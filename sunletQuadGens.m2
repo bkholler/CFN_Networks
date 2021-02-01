@@ -11,20 +11,12 @@ sunletParam = n -> (
 
   indR := indexSet n;
 
-  indS := flatten for i from 1 to n list (
-    for j from 0 to 1 list (
-    {i,j}
-    )
-    );
-
-  T := QQ[for k in indS list a_k, for k in indS list b_k];
+  S := QQ[{t} | apply(2*n, i -> a_i)];
 
   --network param
   images := for ivec in indR list (
-    aProd := product(for i from 0 to #ivec - 1 list a_{i+1, ivec#i});
-    bProd1 := product(for j from 0 to #ivec - 2 list b_{j+1, sum(ivec_(toList(0..j)))%2});
-    bProd2 := product(for j from 1 to #ivec - 1 list b_{j+1, sum(ivec_(toList(1..j)))%2});
-    aProd*(bProd1 + bProd2)
+
+    product(apply(n, j -> if ivec_j == 1 then a_j else t))*(product(apply(n-1, j -> if odd sum(ivec_(toList(0..j))) then a_(n+j) else t)) + product(apply(toList(1..n-1), j -> if odd sum(ivec_(toList(1..j))) then a_(n+j) else t)))
     );
 
   return images;
@@ -38,21 +30,12 @@ sunletElimIdeal = {degLimit => null, Qring => null} >> opts -> n -> (
 
   indR := indexSet n;
 
-  indS := flatten for i from 1 to n list (
-    for j from 0 to 1 list (
-    {i,j}
-    )
-    );
-
-  T := QQ[for k in indS list a_k, for k in indS list b_k, for i in indR list q_i, Degrees =>  toList(2*#indS : 1)|toList(#indR : 2*n - 1), MonomialOrder => {2*#indS, #indR}];
-
+  S := QQ[{t} | apply(2*n, i -> a_i) | apply(indR, i -> q_i), Degrees =>  toList(2*n+1 : 1)|toList(2^(n-1) : 2*n - 1), MonomialOrder => {2*n+1, 2^(n-1)}];
 
   --network param
   images := for ivec in indR list (
-    aProd := product(for i from 0 to #ivec - 1 list a_{i+1, ivec#i});
-    bProd1 := product(for j from 0 to #ivec - 2 list b_{j+1, sum(ivec_(toList(0..j)))%2});
-    bProd2 := product(for j from 1 to #ivec - 1 list b_{j+1, sum(ivec_(toList(1..j)))%2});
-    aProd*(bProd1 + bProd2)
+
+    product(apply(n, j -> if ivec_j == 1 then a_j else t))*(product(apply(n-1, j -> if odd sum(ivec_(toList(0..j))) then a_(n+j) else t)) + product(apply(toList(1..n-1), j -> if odd sum(ivec_(toList(1..j))) then a_(n+j) else t)))
     );
 
   elimIdeal := ideal(for i from 0 to #images-1 list q_(indR#i) - images#i);
@@ -199,7 +182,9 @@ sunletQuadIdeal = (n, R) -> (
   return ideal(fourTerms) + sunletBinomials(n, R);
   );
 
-n = 5;
-d = 2;
-R = qRing n;
-J = sunletElimIdeal(n, degLimit => d, Qring => R)
+n = 5
+d = 2
+R = qRing n
+I = sunletQuadIdeal(n, R)
+psi = sunletParam n;
+J = sunletElimIdeal(n, Qring => R, degLimit => d)
