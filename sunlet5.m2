@@ -87,3 +87,21 @@ A =  matrix {{-1, -1, 0, 0, 2, 2, -1, -1, 0, 0, 1, 1, -1, -1, 0, 0}, {-1, -1, 0,
 
 -- The output from normaliz below shows that K is normal and Gorenstein
 normA = normaliz(transpose(A), "normalization")
+
+
+-- To check that the toric variety is Gorenstein we verify that the canonical module of CC[NN A] has one generator
+-- This is done by ensuring every interior lattice point in the fundamental parallelepiped of C = cone(A) also lies in the polyhedron P
+-- that is obtained by shifting C by this single generator described in Section 5.2
+C = coneFromVData(A)
+P = convexHull(transpose matrix {{2, 2, 4, 2, 2, 3, 4, -1, -1, -1, -2, -3, -4, 1, 1, 1}}) + C
+
+-- This finds all interior lattice points we need to consider
+interiorPts = for S in toList(toList(16:0)..toList(16:1)) list(
+
+  if inInterior(A*(transpose matrix {S}), C) then A*(transpose matrix {S})
+  )
+
+interiorPts = delete(null, interiorPts)
+
+-- This checks every lattice point under consideration lies in P
+isGorenstein = all(interiorPts,  v -> contains(P, convexHull({v})))
